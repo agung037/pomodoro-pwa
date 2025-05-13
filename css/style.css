@@ -1,0 +1,282 @@
+/* CSS Variables for theming */
+:root {
+    /* Light theme (default) */
+    --bg-color: #f5f5f5;
+    --text-color: #333;
+    --primary-color: #FF6347; /* Tomato color */
+    --secondary-color: #e74c3c;
+    --accent-color: #3498db;
+    --container-bg: #ffffff;
+    --button-bg: #FF6347;
+    --button-text: white;
+    --button-hover: #e74c3c;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --border-color: #e0e0e0;
+}
+
+/* Dark theme */
+.dark-theme {
+    --bg-color: #1f1f1f;
+    --text-color: #f5f5f5;
+    --primary-color: #FF6347;
+    --secondary-color: #e74c3c;
+    --accent-color: #3498db;
+    --container-bg: #2d2d2d;
+    --button-bg: #FF6347;
+    --button-text: white;
+    --button-hover: #e74c3c;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --border-color: #444;
+}
+
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Apply PWA App Shell structure */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles - App Shell */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.theme-toggle button {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: white;
+}
+
+/* Main Content */
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1rem;
+    flex: 1;
+}
+
+/* Timer Container */
+.timer-container {
+    background-color: var(--container-bg);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    border: 1px solid var(--border-color);
+}
+
+.timer-display {
+    font-size: 5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.timer-controls {
+    margin-bottom: 1.5rem;
+}
+
+.btn {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    margin: 0 0.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: var(--button-hover);
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.timer-mode {
+    display: flex;
+    justify-content: center;
+}
+
+.mode-btn {
+    background-color: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    margin: 0 0.3rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-btn:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.mode-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Music Player */
+.music-player {
+    background-color: var(--container-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    border: 1px solid var(--border-color);
+}
+
+.music-player h2 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+#music-selector {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.music-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#volume-control {
+    flex: 1;
+    height: 10px;
+    appearance: none;
+    background: var(--border-color);
+    border-radius: 5px;
+    outline: none;
+}
+
+#volume-control::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Session Stats */
+.session-stats {
+    background-color: var(--container-bg);
+    border-radius: 10px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    border: 1px solid var(--border-color);
+}
+
+.session-stats h2 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+#session-count {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Footer - App Shell */
+footer {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .timer-display {
+        font-size: 4rem;
+    }
+    
+    .timer-controls {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn {
+        margin: 0.3rem;
+    }
+    
+    .timer-mode {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .timer-display {
+        font-size: 3.5rem;
+    }
+    
+    header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .timer-container,
+    .music-player,
+    .session-stats {
+        padding: 1rem;
+    }
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 1s infinite;
+} 
