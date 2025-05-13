@@ -1,145 +1,145 @@
-// Cache name with version - update version when assets change
-const CACHE_NAME = 'pomodoro-app-v1';
+// Import Workbox dari CDN (Content Delivery Network)
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.5.4/workbox-sw.js');
 
-// List of files to cache for offline use
-const FILES_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/manifest.json',
-  '/tomato.png',
-  '/icons/apple-icon-180.png',
-  '/icons/manifest-icon-192.maskable.png',
-  '/icons/manifest-icon-512.maskable.png',
-  '/musics/lofi-background-music-336230.mp3',
-  '/musics/lofi-coffee-332824.mp3',
-  '/musics/lofi-rain-lofi-music-332732.mp3',
-  '/musics/coffee-lofi-chill-lofi-music-332738.mp3',
-  '/musics/rainy-lofi-city-lofi-music-332746.mp3'
-];
+// Konfigurasi Workbox, mode debug dimatikan untuk penggunaan di lingkungan produksi
+workbox.setConfig({ debug: false });
 
-// Install event - caches all static assets when the service worker is installed
-self.addEventListener('install', event => {
-  console.log('[Service Worker] Installing Service Worker...');
-  
-  // Extend the service worker installation until the cache is populated
-  event.waitUntil(
-    // Open the cache
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[Service Worker] Caching app shell and content');
-        // Add all files to the cache
-        return cache.addAll(FILES_TO_CACHE);
+// Mengimpor fungsi-fungsi spesifik dari Workbox untuk digunakan dalam service worker ini
+const { registerRoute } = workbox.routing;
+const { CacheFirst, NetworkFirst, StaleWhileRevalidate } = workbox.strategies;
+const { CacheableResponsePlugin } = workbox.cacheableResponse;
+const { ExpirationPlugin } = workbox.expiration;
+const { precacheAndRoute } = workbox.precaching;
+const { BackgroundSyncPlugin } = workbox.backgroundSync;
+
+// Melakukan precache pada aset statis
+// Precache adalah proses menyimpan file ke dalam cache saat service worker diinstal
+// Setiap file memiliki parameter revision untuk mengelola versi cache
+precacheAndRoute([
+  { url: '/', revision: '1' },
+  { url: '/index.html', revision: '1' },
+  { url: '/css/style.css', revision: '1' },
+  { url: '/js/app.js', revision: '1' },
+  { url: '/manifest.json', revision: '1' },
+  { url: '/tomato.png', revision: '1' },
+  { url: '/icons/apple-icon-180.png', revision: '1' },
+  { url: '/icons/manifest-icon-192.maskable.png', revision: '1' },
+  { url: '/icons/manifest-icon-512.maskable.png', revision: '1' },
+  { url: '/musics/lofi-background-music-336230.mp3', revision: '1' },
+  { url: '/musics/lofi-coffee-332824.mp3', revision: '1' },
+  { url: '/musics/lofi-rain-lofi-music-332732.mp3', revision: '1' },
+  { url: '/musics/coffee-lofi-chill-lofi-music-332738.mp3', revision: '1' },
+  { url: '/musics/rainy-lofi-city-lofi-music-332746.mp3', revision: '1' }
+]);
+
+// Caching halaman navigasi dengan strategi Network First
+// Network First: Mencoba mengambil data dari jaringan terlebih dahulu, jika gagal maka menggunakan cache
+// Ini memastikan pengguna mendapatkan konten terbaru saat online, tetapi tetap bisa mengakses aplikasi saat offline
+registerRoute(
+  ({ request }) => request.mode === 'navigate',
+  new NetworkFirst({
+    cacheName: 'pages-cache',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
       })
-      .then(() => {
-        // Force service worker activation
-        console.log('[Service Worker] Successfully installed and cached app shell');
-        return self.skipWaiting();
+    ]
+  })
+);
+
+// Caching file CSS, JavaScript, dan Web Worker dengan strategi Stale While Revalidate
+// Stale While Revalidate: Memberikan respons dari cache (jika ada) terlebih dahulu, kemudian memperbarui cache dari jaringan
+// Strategi ini memberikan keseimbangan antara kecepatan dan kesegaran data
+registerRoute(
+  ({ request }) => 
+    request.destination === 'style' || 
+    request.destination === 'script' ||
+    request.destination === 'worker',
+  new StaleWhileRevalidate({
+    cacheName: 'assets-cache',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 60, // Jumlah maksimal entri yang disimpan di cache
+        maxAgeSeconds: 30 * 24 * 60 * 60, // Masa berlaku cache selama 30 hari
       })
-      .catch(error => {
-        console.error('[Service Worker] Error during install:', error);
+    ]
+  })
+);
+
+// Caching gambar dengan strategi Cache First
+// Cache First: Menggunakan cache sebagai sumber utama, dan hanya menggunakan jaringan jika tidak ada di cache
+// Strategi ini cocok untuk aset statis seperti gambar yang jarang berubah
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new CacheFirst({
+    cacheName: 'images-cache',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50, // Membatasi jumlah gambar yang disimpan
+        maxAgeSeconds: 60 * 24 * 60 * 60, // Masa berlaku cache gambar selama 60 hari
       })
-  );
+    ]
+  })
+);
+
+// Caching file audio dengan strategi Cache First
+// Optimal untuk file media yang berukuran besar dan jarang berubah
+registerRoute(
+  ({ request }) => request.destination === 'audio',
+  new CacheFirst({
+    cacheName: 'audio-cache',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 20, // Membatasi jumlah file audio yang disimpan
+        maxAgeSeconds: 90 * 24 * 60 * 60, // Masa berlaku cache audio selama 90 hari
+      })
+    ]
+  })
+);
+
+// Background Sync untuk data offline
+// Memungkinkan aplikasi mengirim data ke server saat pengguna kembali online
+const bgSyncPlugin = new BackgroundSyncPlugin('pomodoro-sync-queue', {
+  maxRetentionTime: 24 * 60 // Mencoba kembali selama maksimal 24 jam (dalam menit)
 });
 
-// Activate event - clean up old caches when a new service worker is activated
-self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activating Service Worker...');
-  
-  // Remove old caches
-  event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('[Service Worker] Removing old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        // Ensure the service worker takes control of all clients immediately
-        console.log('[Service Worker] Service Worker activated');
-        return self.clients.claim();
-      })
-  );
-});
+// Mendaftarkan rute untuk panggilan API yang akan menggunakan background sync
+// Memungkinkan aplikasi tetap berfungsi bahkan saat offline atau koneksi buruk
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/api/'),
+  new NetworkFirst({
+    plugins: [bgSyncPlugin]
+  }),
+  'POST'
+);
 
-// Fetch event - serve cached content when offline, or fetch from the network
-self.addEventListener('fetch', event => {
-  // Skip cross-origin requests
-  if (event.request.url.startsWith(self.location.origin)) {
-    event.respondWith(
-      // Cache-first strategy with network fallback
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            // Return the cached version
-            console.log('[Service Worker] Fetching resource from cache:', event.request.url);
-            return cachedResponse;
-          }
-          
-          // If not in cache, fetch from network and cache for future
-          return fetch(event.request)
-            .then(networkResponse => {
-              // Return the network response
-              if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                console.log('[Service Worker] Fetched non-cacheable resource:', event.request.url);
-                return networkResponse;
-              }
-              
-              // Clone the response - one to return, one to cache
-              const responseToCache = networkResponse.clone();
-              
-              // Open the cache and store the new response
-              caches.open(CACHE_NAME)
-                .then(cache => {
-                  console.log('[Service Worker] Caching new resource:', event.request.url);
-                  cache.put(event.request, responseToCache);
-                });
-              
-              return networkResponse;
-            })
-            .catch(error => {
-              console.error('[Service Worker] Fetch failed:', error);
-              
-              // For navigation requests, provide the offline page
-              if (event.request.mode === 'navigate') {
-                return caches.match('/index.html');
-              }
-              
-              // Otherwise just indicate the fetch failed
-              return new Response('Network error happened', {
-                status: 404,
-                headers: { 'Content-Type': 'text/plain' }
-              });
-            });
-        })
-    );
-  }
-});
-
-// Push event - handle push notifications
+// Penanganan event push notification
+// Event ini dipicu ketika server mengirim notifikasi push ke service worker
 self.addEventListener('push', event => {
-  console.log('[Service Worker] Push received:', event);
-  
   let notificationData = {
     title: 'Pomodoro Timer',
     options: {
-      body: 'Time notification from Pomodoro Timer',
+      body: 'Notifikasi waktu dari Pomodoro Timer',
       icon: '/tomato.png',
       badge: '/icons/manifest-icon-192.maskable.png',
-      vibrate: [100, 50, 100],
+      vibrate: [100, 50, 100], // Pola getar: 100ms aktif, 50ms istirahat, 100ms aktif
       data: {
-        url: self.location.origin
+        url: self.location.origin // URL yang akan dibuka ketika notifikasi diklik
       }
     }
   };
   
-  // Use data from the push event if available
+  // Menggunakan data dari event push jika tersedia
+  // Ini memungkinkan server mengirim data spesifik untuk notifikasi
   if (event.data) {
     try {
       const data = event.data.json();
@@ -149,45 +149,32 @@ self.addEventListener('push', event => {
     }
   }
   
+  // Menampilkan notifikasi kepada pengguna
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData.options)
   );
 });
 
-// Notification click event - handle when user clicks a notification
+// Penanganan event klik notifikasi
+// Event ini dipicu ketika pengguna mengklik notifikasi yang ditampilkan
 self.addEventListener('notificationclick', event => {
-  console.log('[Service Worker] Notification clicked:', event);
+  event.notification.close(); // Menutup notifikasi setelah diklik
   
-  event.notification.close();
-  
-  // Open a window/tab with the app 
+  // URL yang akan dibuka ketika notifikasi diklik
   const urlToOpen = new URL('/', self.location.origin);
   
-  // Focus if a window already exists, open a new one if it doesn't
+  // Logika untuk membuka aplikasi:
+  // 1. Jika aplikasi sudah terbuka di tab lain, fokus ke tab tersebut
+  // 2. Jika tidak, buka aplikasi di tab baru
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(clientList => {
-        // Check if a client window is already open
         for (const client of clientList) {
           if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-            return client.focus();
+            return client.focus(); // Fokus ke jendela yang sudah ada
           }
         }
-        // If no existing client, open a new window
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(urlToOpen); // Buka jendela baru jika tidak ada yang terbuka
       })
   );
-});
-
-// Background sync for offline functionality
-self.addEventListener('sync', event => {
-  console.log('[Service Worker] Background Sync event:', event);
-  
-  if (event.tag === 'sync-pomodoro-data') {
-    event.waitUntil(
-      // Sync data from IndexedDB to server when back online
-      // For demo purposes, just log that sync would happen
-      console.log('[Service Worker] Syncing data from IndexedDB to server')
-    );
-  }
 }); 
